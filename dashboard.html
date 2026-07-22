@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Credit Risk Segmentation — Case Study</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root{
+    --bg:#0B1120; --panel:#121B2E; --border:#233047;
+    --text:#E7ECF5; --muted:#8492AC; --muted-2:#5A6B8C;
+    --danger:#E8574A; --good:#33C79A; --amber:#F0A83B;
+    --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);padding:28px 32px 60px;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:26px;flex-wrap:wrap;gap:12px;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:26px;font-weight:600;margin:0;letter-spacing:-0.01em;}
+  .sub{color:var(--muted);font-size:13.5px;margin-top:4px;max-width:580px;line-height:1.5;}
+  .badge{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:6px 10px;text-align:right;line-height:1.6;}
+  .badge b{color:var(--text);}
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
+  .kpi .label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .kpi .value{font-family:var(--mono);font-size:22px;font-weight:600;}
+  .kpi .value.danger{color:var(--danger);} .kpi .value.good{color:var(--good);} .kpi .value.amber{color:var(--amber);}
+  .kpi .note{font-size:10.5px;color:var(--muted-2);margin-top:4px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:16px;}
+  .panel h2{font-size:13px;font-weight:600;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .panel h2 .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block;}
+  .panel .desc{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+  .grid-2{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;}
+  .grid-2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  canvas{max-height:260px;}
+  table.dq-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+  table.dq-table th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:0 8px 8px;border-bottom:1px solid var(--border);}
+  table.dq-table td{padding:8px;border-bottom:1px solid var(--border);}
+  table.dq-table tr:last-child td{border-bottom:none;}
+  .sev{font-family:var(--sans);font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:3px;display:inline-block;}
+  .sev.high{background:rgba(232,87,74,.16);color:var(--danger);}
+  .sev.med{background:rgba(240,168,59,.16);color:var(--amber);}
+  footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow">Credit &amp; Fraud Risk · Analytics Case Study</div>
+      <h1>Credit Risk Segmentation &amp; Data Quality Audit</h1>
+      <div class="sub">Data quality audit → cleaning → risk-tier segmentation, built on 150,000 real credit customer records.</div>
+    </div>
+    <div class="badge">
+      Source: <b>Give Me Some Credit (Kaggle)</b><br>
+      150,000 customers<br>
+      Baseline default rate: <b>6.68%</b>
+    </div>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="label">Customers analyzed</div><div class="value">150,000</div><div class="note">1 impossible row removed</div></div>
+    <div class="kpi"><div class="label">Missing income data</div><div class="value amber">19.8%</div><div class="note">29,731 rows imputed</div></div>
+    <div class="kpi"><div class="label">Corrupted risk codes</div><div class="value danger">269</div><div class="note">96/98 sentinel values</div></div>
+    <div class="kpi"><div class="label">Model ROC-AUC</div><div class="value good">0.856</div><div class="note">Logistic Regression, balanced</div></div>
+    <div class="kpi"><div class="label">Risk tier spread</div><div class="value good">39x</div><div class="note">0.60% → 23.38% default</div></div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="dot"></span>Data quality findings</h2>
+    <div class="desc">Every issue below was found via SQL audit before any modeling — this is the stewardship step most candidates skip.</div>
+    <table class="dq-table">
+      <tr><th>Issue</th><th>Severity</th><th>Count</th><th>Action taken</th></tr>
+      <tr><td>Missing MonthlyIncome</td><td><span class="sev med">Medium</span></td><td>29,731 (19.8%)</td><td>Median imputation + missing-flag column added</td></tr>
+      <tr><td>Missing NumberOfDependents</td><td><span class="sev med">Medium</span></td><td>3,924 (2.6%)</td><td>Imputed as 0 (mode)</td></tr>
+      <tr><td>age = 0 (impossible)</td><td><span class="sev high">High</span></td><td>1</td><td>Row removed</td></tr>
+      <tr><td>Sentinel codes (96/98) in past-due fields</td><td><span class="sev high">High</span></td><td>269</td><td>Capped at 18 — retained as real signal, not dropped (54.65% default rate in this group)</td></tr>
+      <tr><td>Utilization ratio &gt; 1 (should be 0-1)</td><td><span class="sev med">Medium</span></td><td>3,321</td><td>Capped at 2 to preserve legitimate over-limit cases</td></tr>
+      <tr><td>DebtRatio &gt; 1,000 (max was 329,664)</td><td><span class="sev high">High</span></td><td>16,892</td><td>Capped at 99th percentile</td></tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h2><span class="dot" style="background:var(--good)"></span>Risk tier segmentation</h2>
+      <div class="desc">150,000 customers split into 5 equal-size tiers by model-predicted default probability. Default rate climbs cleanly from tier to tier — confirms the segmentation actually separates risk.</div>
+      <canvas id="tierChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2><span class="dot" style="background:var(--good)"></span>Top risk drivers</h2>
+      <div class="desc">Standardized logistic regression coefficients — larger magnitude = stronger effect on default probability.</div>
+      <canvas id="featChart"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2b">
+    <div class="panel">
+      <h2><span class="dot" style="background:var(--amber)"></span>Default rate by age band</h2>
+      <div class="desc">Younger customers carry substantially more risk — a 5x gap between the riskiest and safest age bands.</div>
+      <canvas id="ageChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2><span class="dot" style="background:var(--danger)"></span>Default rate by 90+ days late history</h2>
+      <div class="desc">The single strongest predictor: customers with 6+ instances of 90-day-late payments default 14x more than those with none.</div>
+      <canvas id="lateChart"></canvas>
+    </div>
+  </div>
+
+  <footer>
+    <span>Pipeline: SQL audit → data cleaning → Logistic Regression → risk-tier segmentation → this dashboard</span>
+    <span>Dataset: "Give Me Some Credit" (Kaggle)</span>
+  </footer>
+</div>
+
+<script>
+Chart.defaults.color = '#8492AC';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10.5;
+Chart.defaults.borderColor = '#233047';
+const grid = { color: '#1B2740' };
+
+new Chart(document.getElementById('tierChart'), {
+  type:'bar',
+  data:{
+    labels:['Very Low','Low','Medium','High','Very High'],
+    datasets:[{ data:[0.60,1.16,2.40,5.88,23.38], backgroundColor:['#33C79A','#5FBF9A','#F0A83B','#E8814A','#E8574A'], borderRadius:3 }]
+  },
+  options:{ plugins:{legend:{display:false}}, scales:{ y:{grid, ticks:{callback:v=>v+'%'}, title:{display:true,text:'default rate',color:'#5A6B8C',font:{size:10}}}, x:{grid:{display:false}} } }
+});
+
+new Chart(document.getElementById('featChart'), {
+  type:'bar',
+  data:{
+    labels:['Revolving Utilization','90+ Days Late','30-59 Days Late','60-89 Days Late','Age','Monthly Income','Open Credit Lines','Real Estate Loans'],
+    datasets:[{ data:[0.746,0.705,0.541,0.491,-0.279,-0.202,0.165,0.134], backgroundColor:c=>c.raw<0?'#33C79A':'#E8574A', borderRadius:3 }]
+  },
+  options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{grid}, y:{grid:{display:false}} } }
+});
+
+new Chart(document.getElementById('ageChart'), {
+  type:'line',
+  data:{
+    labels:['18-29','30-39','40-49','50-59','60-69','70+'],
+    datasets:[{ data:[11.73,10.07,8.37,6.45,3.63,2.32], borderColor:'#F0A83B', backgroundColor:'rgba(240,168,59,.1)', fill:true, tension:.3, pointRadius:3, pointBackgroundColor:'#F0A83B' }]
+  },
+  options:{ plugins:{legend:{display:false}}, scales:{ y:{grid, ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} } }
+});
+
+new Chart(document.getElementById('lateChart'), {
+  type:'bar',
+  data:{
+    labels:['0 times','1-2 times','3-5 times','6+ times'],
+    datasets:[{ data:[4.63,37.38,60.88,66.48], backgroundColor:'#E8574A', borderRadius:3 }]
+  },
+  options:{ plugins:{legend:{display:false}}, scales:{ y:{grid, ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}} } }
+});
+</script>
+</body>
+</html>

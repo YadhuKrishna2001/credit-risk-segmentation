@@ -1,0 +1,5 @@
+venv/
+cs-training.csv
+credit_risk.db
+__pycache__/
+*.pyc

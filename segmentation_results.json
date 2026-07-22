@@ -1,0 +1,56 @@
+{
+  "quality_log": {
+    "missing_monthly_income": 29731,
+    "missing_dependents": 3924,
+    "age_zero_count": 1,
+    "sentinel_code_rows": 269,
+    "utilization_over_1": 3321,
+    "debtratio_over_1000": 16892,
+    "rows_after_cleaning": 149999,
+    "rows_removed": 1
+  },
+  "model_auc": 0.8556,
+  "risk_tier_summary": [
+    {
+      "risk_tier": "Very Low",
+      "n_customers": 30000,
+      "defaults": 179,
+      "default_rate_pct": 0.6
+    },
+    {
+      "risk_tier": "Low",
+      "n_customers": 30000,
+      "defaults": 349,
+      "default_rate_pct": 1.16
+    },
+    {
+      "risk_tier": "Medium",
+      "n_customers": 29999,
+      "defaults": 719,
+      "default_rate_pct": 2.4
+    },
+    {
+      "risk_tier": "High",
+      "n_customers": 30000,
+      "defaults": 1765,
+      "default_rate_pct": 5.88
+    },
+    {
+      "risk_tier": "Very High",
+      "n_customers": 30000,
+      "defaults": 7014,
+      "default_rate_pct": 23.38
+    }
+  ],
+  "top_features": {
+    "RevolvingUtilizationOfUnsecuredLines": 0.7459,
+    "NumberOfTimes90DaysLate": 0.7053,
+    "NumberOfTime30-59DaysPastDueNotWorse": 0.5407,
+    "NumberOfTime60-89DaysPastDueNotWorse": 0.4906,
+    "age": -0.2789,
+    "MonthlyIncome": -0.2023,
+    "NumberOfOpenCreditLinesAndLoans": 0.1653,
+    "NumberRealEstateLoansOrLines": 0.1339
+  },
+  "original_default_rate_pct": 6.68
+}
