@@ -1,4 +1,4 @@
-URL:https://yadhukrishna2001.github.io/credit-risk-segmentation/dashboard.html
+URL:🔗
 # Credit Risk Segmentation & Data Quality Audit
 
 Data governance and risk-tier segmentation built on 150,000 real credit customer records
