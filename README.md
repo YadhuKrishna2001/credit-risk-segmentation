@@ -55,7 +55,7 @@ SQL (SQLite) · Python (pandas, scikit-learn) · Chart.js
 
 ## Dataset
 
-["Give Me Some Credit"](https://www.kaggle.com/c/GiveMeSomeCredit/data) — Kaggle.
+(https://www.kaggle.com/c/GiveMeSomeCredit/data) — Kaggle.
 Not included in this repo; see `Local_Setup_Guide.md` for download instructions.
 
 ## Running it locally
